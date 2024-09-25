@@ -6,7 +6,8 @@ ports = list(serial.tools.list_ports.comports())
 print(ports[0][0])
 
 port = ports[0][0]
-baudrate = 115200
+#baudrate = 115200
+baudrate = 230400
 SerialPort = serial.Serial(port, baudrate, timeout=30)
 
 STX =                           0x02
