@@ -36,7 +36,7 @@ def calc_checksums(tg: tuple[int]) -> tuple[int, int]:
 
 def SendTelegram(tg:bytearray) -> None:
     print(tg)
-    SerialPort.write((tg))
+    SerialPort.write(bytes(tg))
 
 #COMANDS--------------------------------------
 class Commands:
