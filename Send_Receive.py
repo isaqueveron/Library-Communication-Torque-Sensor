@@ -21,7 +21,7 @@ class Commands:
     ###
 
     def SendTelegram(tg:bytearray) -> None:
-        print(tg)
+        print('bytearray sent:',tg)
         SerialPort.write(bytes(tg))
 
     def calc_checksums(tg: tuple[int]) -> tuple[int, int]:
@@ -163,12 +163,12 @@ class Commands:
         telegram = bytearray(telegram+CHECKSUM_WCHECKSUM) #transform the tuple of ints in a byte array for sending
         return telegram #return the telegram
 
-    def ReadConfig(PARAMETERS: list[int]=[]) -> bytearray:
+    def ReadConfig(PARAMETERS: list[int]=[]) -> bytearray: #parameter: Block number
         """
         Reads a configuration block. There are several blocks containing different data.
             
         Args:
-            PARAMETERS (None):
+            PARAMETERS (Block number): Block number
 
         Returns:
             the telegram bytearray.
@@ -284,8 +284,9 @@ class Receive:
             try: char = (byte.decode())
             except:  
                 char = (byte)
-            lista.append(char) 
-        return tuple(lista[0:])
+            lista.append(char)
+        print(lista)
+        return tuple(lista)
 
     def check_checksums(tg: tuple[int]) -> bool|tuple:
         """check the equality of received checksums and calulated checksums
@@ -296,7 +297,7 @@ class Receive:
         Returns:
             bool, tuple of calculated checksum and wgchecksum"""
         
-        calc_ck = Commands.calc_checksums(tg[2:-2]) #tg[2:-2] for double stx tg [1:-2] for sensor response
+        calc_ck = Commands.calc_checksums(tg[1:-2]) #tg[2:-2] for double stx tg [1:-2] for sensor response
         if calc_ck==(tg[-2:]):
             return 1,calc_ck
         else:
@@ -305,7 +306,7 @@ class Receive:
     def read_from()->bytes|None:
         data = SerialPort.readline()
         if data != b'': #if nothing is being told do not listen
-            print(data) #print the raw data
+            print('bytearray received:',data) #print the raw data
             return data
         else: return None
 
@@ -314,19 +315,19 @@ while True:
     print('________________________')
     print('choose a command:       |')
     print('(1) -> Hello            |')#do not work
-    print('(2) -> ReadRaw          |')
-    print('(3) -> ReadStatus       |')
-    print('(4) -> ReadStatusShort  |')
-    print('(5) -> ReadConfig       |')
-    print('(6) -> WriteConfig      |')
-    print('(7) -> WriteFullStroke  |')
-    print('(8) -> RestartDevice    |')
+    print('(2) -> ReadRaw          |')#ok
+    print('(3) -> ReadStatus       |')#ok
+    print('(4) -> ReadStatusShort  |')#ok
+    print('(5) -> ReadConfig       |')#bad_parameter
+    print('(6) -> WriteConfig      |')#bad_parameter
+    print('(7) -> WriteFullStroke  |')#bad_parameter
+    print('(8) -> RestartDevice    |')#ok
     print('________________________')
     isReceiving = True
     selection = input('write command: ')
     if selection == '1':
         Commands.SendTelegram(Commands.Hello())
-        print('!command not working!')
+        #print('!command not working!')
     elif selection == '2':
         Commands.SendTelegram(Commands.ReadRaw())
     elif selection == '3':
@@ -349,7 +350,7 @@ while True:
     while isReceiving: #loop for receiving
         code_received=Receive.read_from()
         if code_received != None:
-            print("Receiving...") ######
+            #print("Receiving...") ######
             code_translated = Receive.translate(code_received)
             if code_translated[-2:]==(13,10): # if it have \r\n remove it
                 code_translated=code_translated[:-2]
@@ -366,7 +367,7 @@ while True:
                 if code_translated[3]==0:
                     print("CKSUMS  :",code_translated[4:])
                 else: 
-                    parameters_received=code_translated[4:-2]
+                    parameters_received=code_translated[4:-2] #here is the important information !!
                     print("PARAMS  :",parameters_received)
                     print("CKSUMS  :",code_translated[-2:])
                 isReceiving = False
@@ -376,4 +377,9 @@ while True:
             print('TIMEOUT') 
             time.sleep(1)
             break 
+
+            
+
+
+            
             
