@@ -313,7 +313,7 @@ class Receive:
 while True:
     print('________________________')
     print('choose a command:       |')
-    print('(1) -> Hello            |')
+    print('(1) -> Hello            |')#do not work
     print('(2) -> ReadRaw          |')
     print('(3) -> ReadStatus       |')
     print('(4) -> ReadStatusShort  |')
@@ -326,6 +326,7 @@ while True:
     selection = input('write command: ')
     if selection == '1':
         Commands.SendTelegram(Commands.Hello())
+        print('!command not working!')
     elif selection == '2':
         Commands.SendTelegram(Commands.ReadRaw())
     elif selection == '3':
@@ -345,10 +346,10 @@ while True:
         print('________________________')
         isReceiving = False  
 
-
     while isReceiving: #loop for receiving
         code_received=Receive.read_from()
         if code_received != None:
+            print("Receiving...") ######
             code_translated = Receive.translate(code_received)
             if code_translated[-2:]==(13,10): # if it have \r\n remove it
                 code_translated=code_translated[:-2]
@@ -369,7 +370,10 @@ while True:
                     print("PARAMS  :",parameters_received)
                     print("CKSUMS  :",code_translated[-2:])
                 isReceiving = False
-                time.sleep(2)
-
+                time.sleep(1)
             else: print('BAD CHECK SUMS')
+        else:
+            print('TIMEOUT') 
+            time.sleep(1)
+            break 
             
