@@ -8,7 +8,7 @@ print(ports[0][0])
 port = ports[0][0]
 #baudrate = 115200
 baudrate = 230400
-SerialPort = serial.Serial(port, baudrate, timeout=30)
+SerialPort = serial.Serial(port, baudrate, timeout=1)
 
 STX =                           0x02
 SCMD_ACK =                      0x06
