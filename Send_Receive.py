@@ -9,8 +9,8 @@ Telegram format:
 ♦ Checksum (byte)
 ♦ Weighted checksum (byte) 
 """
-
-from Config import *
+from ConfigMac import * #this works in my mac
+from ConfigLinux import * #this works in my linux
 
 #COMANDS--------------------------------------
 class Commands:
@@ -21,7 +21,7 @@ class Commands:
     ###
 
     def SendTelegram(tg:bytearray) -> None:
-        print('bytearray sent:',tg)
+        print('bytearray sent    :',Receive.translate(tg))
         SerialPort.write(bytes(tg))
 
     def calc_checksums(tg: tuple[int]) -> tuple[int, int]:
@@ -285,7 +285,6 @@ class Receive:
             except:  
                 char = (byte)
             lista.append(char)
-        print(lista)
         return tuple(lista)
 
     def check_checksums(tg: tuple[int]) -> bool|tuple:
@@ -296,32 +295,41 @@ class Receive:
             
         Returns:
             bool, tuple of calculated checksum and wgchecksum"""
+        if tg[-2:]==b'\r\n':
+            received_ck = tg[-4:-2]
+            tg = tg[:-4]
+        else: 
+            received_ck = tg[-2:]
+            tg = tg[:-2]
+        if tg[1]==2:
+            tg = tg[2:]
+        else:            
+            tg = tg[1:]
+
+        if Commands.calc_checksums(tg)==Receive.translate(received_ck):
+            return True
+        else: return False
         
-        calc_ck = Commands.calc_checksums(tg[1:-2]) #tg[2:-2] for double stx tg [1:-2] for sensor response
-        if calc_ck==(tg[-2:]):
-            return 1,calc_ck
-        else:
-            return 0,calc_ck
     
     def read_from()->bytes|None:
         data = SerialPort.readline()
         if data != b'': #if nothing is being told do not listen
-            print('bytearray received:',data) #print the raw data
+            print('bytearray received:',Receive.translate(data)) #print the data
             return data
         else: return None
 
 
 while True:
     print('________________________')
-    print('choose a command:       |')
-    print('(1) -> Hello            |')#do not work
-    print('(2) -> ReadRaw          |')#ok
-    print('(3) -> ReadStatus       |')#ok
-    print('(4) -> ReadStatusShort  |')#ok
-    print('(5) -> ReadConfig       |')#bad_parameter
-    print('(6) -> WriteConfig      |')#bad_parameter
-    print('(7) -> WriteFullStroke  |')#bad_parameter
-    print('(8) -> RestartDevice    |')#ok
+    print('choose a command:       |  ')
+    print('(1) -> Hello            | I')#do not work
+    print('(2) -> ReadRaw          | S C')#ok
+    print('(3) -> ReadStatus       | A O')#ok
+    print('(4) -> ReadStatusShort  | Q D')#ok
+    print('(5) -> ReadConfig       | U E')#bad_parameter
+    print('(6) -> WriteConfig      | E')#bad_parameter
+    print('(7) -> WriteFullStroke  | ;)')#bad_parameter
+    print('(8) -> RestartDevice    |  ')#ok
     print('________________________')
     isReceiving = True
     selection = input('write command: ')
@@ -358,28 +366,23 @@ while True:
                 code_translated=code_translated[2:]#remove both
             else: code_translated=code_translated[1:]#remove the only one
 
-            if Receive.check_checksums(code_translated):
-                print("Command :",code_translated[0])
+            if Receive.check_checksums(code_received):
+                print("Command           :",code_translated[0])
                 if code_translated[0] == 16: print('NACK')
-                print("RX      :",code_translated[1])
-                print("TX      :",code_translated[2])
-                print("NBR_PARA:",code_translated[3])
+                print("RX                :",code_translated[1])
+                print("TX                :",code_translated[2])
+                print("NBR OF PARAMETERS :",code_translated[3])
                 if code_translated[3]==0:
-                    print("CKSUMS  :",code_translated[4:])
+                    print("CHECK SUMS        :",code_translated[4:])
                 else: 
                     parameters_received=code_translated[4:-2] #here is the important information !!
-                    print("PARAMS  :",parameters_received)
-                    print("CKSUMS  :",code_translated[-2:])
+                    print("PARAMS            :",parameters_received)
+                    print("CKSUMS            :",code_translated[-2:])
                 isReceiving = False
                 time.sleep(1)
             else: print('BAD CHECK SUMS')
         else:
             print('TIMEOUT') 
-            time.sleep(1)
+            time.sleep(time_sleep)
             break 
-
-            
-
-
-            
-            
+        
