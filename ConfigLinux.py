@@ -25,3 +25,4 @@ SCMD_GotoSpecialMode =          0x5a
 
 isReceiving = False
 code_received = b'' #var for storing message
+time_sleep = 0.000 # sec
