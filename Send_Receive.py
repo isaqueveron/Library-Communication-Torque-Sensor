@@ -9,7 +9,7 @@ Telegram format:
 ♦ Checksum (byte)
 ♦ Weighted checksum (byte) 
 """
-from ConfigMac import * #this works in my mac
+#from ConfigMac import * #this works in my mac
 from ConfigLinux import * #this works in my linux
 
 #COMANDS--------------------------------------
