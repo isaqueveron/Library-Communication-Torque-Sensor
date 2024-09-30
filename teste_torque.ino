@@ -1,8 +1,8 @@
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial.setTimeout(3000);
+  Serial.begin(230400);
+  Serial.setTimeout(30);
   while (!Serial);
 }
 void loop() {
@@ -17,13 +17,6 @@ void loop() {
     
     Serial.println(incomingByteString);
     
-    // responder o que foi recebido:
-    //Serial.println("STRT_OF_STRING");
-    //for(int i=0;i<sizeof(incomingByte);i++){Serial.write("[");
-    //Serial.write(incomingByte[i]);
-    //Serial.write("]");
-    //Serial.println();}
-    //Serial.println("END_OF_STRING");
     
   }
 }
