@@ -10,7 +10,7 @@ update 1 26/set/24: it workedddddd! I send the command and it respond some of th
 update 2 o3/out/24: now the communication are really fast, and we got the readigns already in N.m probably.
 
 References:
-https://github.com/Duckle29/LorenzTelegram/tree/main
+ - https://github.com/Duckle29/LorenzTelegram/tree/main
 http://www.shintron.com.tw/proimages/a3-2/Protocol.pdf
 https://www.mb-naklo.si/files/catalogs/avtomatizacija/lorenz-messtechnik/senzorji-momenta-in-sile-lorenz.pdf
 https://www.sensor.com.tw/upload/files/lorenz/operation%20manual/090302i_DR_3000_VS.pdf
