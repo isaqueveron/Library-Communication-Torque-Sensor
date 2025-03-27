@@ -1,4 +1,4 @@
-from Send_Receive import *
+from LCTS.Functions import *
 
 class RunReading:
     def __init__(self,MesurementChannel_0=0,MesurementChannel_1=0,CalibratedValCha_0=0,CalibratedValCha_1=0):
