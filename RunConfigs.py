@@ -1,4 +1,4 @@
-from LCTS.Functions import *
+from LCTSfunctions import *
 
 while True:
     print('________________________')
