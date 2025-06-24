@@ -12,6 +12,8 @@ Telegram format:
 #from ConfigMac import * #this works in my mac
 from ConfigLinux import * #this works in my linux
 
+#test
+
 class Tools:
     def calc_checksums(tg: tuple[int]) -> tuple[int, int]:
         """Generates checksums for the telegram.
