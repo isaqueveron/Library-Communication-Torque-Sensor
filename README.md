@@ -17,7 +17,13 @@ A biblioteca `LCTSfunctions` é um conjunto de módulos Python desenvolvido para
 ## Contexto de Utilização no Projeto "Bancada de Emulação de Turbina Eólica Integrada em Microrrede"
 
 No âmbito do projeto de pesquisa "BANCADA DE EMULAÇÃO DE TURBINA EÓLICA INTEGRADA EM MICRORREDE", a **biblioteca `LCTSfunctions`** desempenha um papel crucial na interface com o transdutor de torque T25, um componente essencial do emulador eólico. Desenvolvida em Python e aderindo ao protocolo de comunicação serial proprietário do fabricante, esta biblioteca permite a **leitura precisa e em tempo real dos valores de torque e RPM** gerados pelo sistema motor-gerador. Ao abstrair a complexidade da comunicação por telegramas de bytes, a `LCTSfunctions` viabiliza a **coleta contínua de dados**, fundamental para o sistema de controle que ajusta o motor emulador eólico, garantindo que ele reproduza fielmente o comportamento de uma turbina real sob diversas condições de vento. Em última análise, a confiabilidade e agilidade proporcionadas por esta biblioteca são pilares para o desenvolvimento do gêmeo digital da microrrede e para a validação de algoritmos avançados de controle e gestão de energia em um ambiente de laboratório multiusuário.
-
+#### Configuração do Transdutor instalado no Emulador
+* 8 bits de dados
+* 1 bit de parada
+* sem paridade 
+* 230400 de baudrate 
+* timeout 3 ms 
+* 10μs de silêncio entre mensagens(importante para definir tempo de amostragem)
 -----
 
 ## Fluxograma de Alto Nível do Processo de Comunicação
@@ -96,8 +102,8 @@ Esta classe gerencia a conexão serial e as operações de alto nível com o tra
 Inicializa a comunicação com o torquímetro.
 
   * `Port` (string): Nome da porta serial (ex: 'COM1' no Windows, '/dev/ttyUSB0' no Linux).
-  * `Tm_max` (float): Torque máximo que o dispositivo pode medir (para calibração).
-  * `Rpm_max` (float): RPM máximo que o dispositivo pode medir (para calibração).
+  * `Tm_max` (float): Torque máximo que o dispositivo pode medir.
+  * `Rpm_max` (float): RPM máximo que o dispositivo pode medir.
   * `Baudrate` (int, opcional): Taxa de transmissão. Padrão: `230400`.
   * `Timeout` (float, opcional): Tempo limite para leitura serial em segundos. Padrão: `0.003`.
   * `byte_resolution` (int, opcional): Valor máximo em bytes que representa a resolução do sensor. Padrão: `25000`.
