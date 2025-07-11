@@ -216,6 +216,6 @@ Este projeto está licenciado sob a licença MIT. Consulte o arquivo `LICENSE` p
 
 ## Contato
 
-  * **Isaque Verona** - [GitHub Profile](https://www.google.com/search?q=https://github.com/isaque-verona)
+  * **Isaque Verona** - [GitHub Profile](https://www.google.com/search?q=https://github.com/isaqueveron)
 
 -----
