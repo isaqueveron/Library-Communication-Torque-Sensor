@@ -58,7 +58,7 @@ SCMD_GotoSpecialMode =          0x5a
 
 class Torquimeter:
 
-    def __init__(self ,Port:str, Tm_max:float, Rpm_max:float, 
+    def __init__(self ,Port:str, Tm_max:100, Rpm_max:30000, 
                  Baudrate = 230400, Timeout = 0.003, byte_resolution = 25000):
         
         self.serialport = serial.Serial(port=Port,baudrate=Baudrate,timeout=Timeout) #inicializes the serial port
@@ -463,19 +463,23 @@ class Methods:
         global SCMD_ReadRaw
         if command_para == None: return None
         command = command_para[0]
-        parameters = Methods.ToHex(list(command_para[1])) #converte str para hex
+        
+        # Transforma em hex e garante 2 digitos para cada byte
+        params = [hex(p)[2:].zfill(2) for p in command_para[1]]
+        
         if command == SCMD_ReadRaw:
-            #in bytes (0-65536)
-            MesurementChannel_0 = int((parameters[0])+(parameters[1])[2:],16)
-            MesurementChannel_1 = int((parameters[2])+(parameters[3])[2:],16)
-            CalibratedValCha_0  = int((parameters[4])+(parameters[5])[2:],16)
-            CalibratedValCha_1  = int((parameters[6])+(parameters[7])[2:],16)
-            FullstrokeFlag      = int((parameters[8]),16)
-            RawData=[MesurementChannel_0,MesurementChannel_1,
-                    CalibratedValCha_0,CalibratedValCha_1,
+            # Concatena os pares de bytes corretamente
+            MesurementChannel_0 = int(params[0] + params[1], 16)
+            MesurementChannel_1 = int(params[2] + params[3], 16)
+            CalibratedValCha_0  = int(params[4] + params[5], 16)
+            CalibratedValCha_1  = int(params[6] + params[7], 16)
+            FullstrokeFlag      = int(params[8], 16)
+            
+            RawData = [MesurementChannel_0, MesurementChannel_1,
+                    CalibratedValCha_0, CalibratedValCha_1,
                     FullstrokeFlag]
             return RawData
-        else: return None
+        return None
     
     def ReceiveTg(code_received:bytearray) -> list[int,list[int]]|str:
         
