@@ -65,18 +65,18 @@ class Torquimeter:
         self.serialport.read_all() #read trash from the buffer
         self.isReceiving = False
         self.Overloadflag = False
-        self.Tm_max = Tm_max # max torque read by the device
-        self.Rpm_max = Rpm_max # max rpm read by the device
+        self.Tm_max = Tm_max # device max torque
+        self.Rpm_max = Rpm_max # device max rpm
         self.byte_resolution = byte_resolution # max value in bytes
         #last read values
         self.data = []
         self.MesurementChannel_0 = None
         self.MesurementChannel_1 = None
-        self.CalibratedValCha_0  = None
-        self.CalibratedValCha_1  = None
+        self.Torque_calibrated   = None
+        self.RPM_calibrated      = None
         self.FullstrokeFlag      = None
 
-    def ReadRaw(self) -> list|None:
+    def ReadRaw(self, tries = 1) -> list|None:
 
         """
         Sensors send the latest calibrated and uncalibrated measurement values. 
@@ -93,8 +93,10 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.ReadRaw()) #sends the command "ReadRaw"
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
-            try:code_received=Methods.ReadFrom(self.serialport)
+        data = None
+        for attempt in range(tries): #loop for receiving
+            try:
+                code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
                 try:
@@ -106,19 +108,17 @@ class Torquimeter:
                     self.data = data
                     self.MesurementChannel_0 = data[0]
                     self.MesurementChannel_1 = data[1]
-                    self.CalibratedValCha_0  = data[2]*self.Tm_max/self.byte_resolution #TORQUE
-                    self.CalibratedValCha_1  = data[3]*self.Rpm_max/self.byte_resolution #RPM
+                    self.Torque_calibrated   = data[2]*self.Tm_max/self.byte_resolution #TORQUE
+                    self.RPM_calibrated      = data[3]*self.Rpm_max/self.byte_resolution #RPM
                     self.FullstrokeFlag      = data[4]
-                    self.isReceiving = False 
                 else: data = None
-                self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
-            return (self.MesurementChannel_0,self.MesurementChannel_1,
-                    self.CalibratedValCha_0,self.CalibratedValCha_1,
+        self.isReceiving = False 
+        return (self.MesurementChannel_0,self.MesurementChannel_1,
+                    self.Torque_calibrated,self.RPM_calibrated,
                     self.FullstrokeFlag, self.Overloadflag)
     
-    def Hello(self) -> list|None:
+    def Hello(self, tries = 1) -> list|None:
 
         """
         Sensors can be configured to send this message after power up.
@@ -134,7 +134,8 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.Hello())
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -143,12 +144,11 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
 
-    def ReadStatus(self) -> list|None: 
+    def ReadStatus(self, tries = 1) -> list|None: 
       
         """
         Send a detailed status report. 
@@ -163,7 +163,8 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.ReadStatus())
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -172,12 +173,11 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
     
-    def ReadStatusShort(self) -> list|None:
+    def ReadStatusShort(self, tries = 1) -> list|None:
         
         """
         Send a short version of the status report. 
@@ -191,7 +191,8 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.ReadStatusShort())
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -200,19 +201,18 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
         
-    def ReadConfig(self, parameter: int)->list|None: #parameter: Block number
+    def ReadConfig(self, parameter: int, tries = 1) -> list|None: # parameter: Block number
         
         """
         Reads a configuration block. 
         There are several blocks containing different data.
             
         Args:
-            (int): Block number.
+            parameter (int): Block number.
 
         Returns:
             (list)
@@ -220,7 +220,8 @@ class Torquimeter:
         
         Methods.SendTelegram(self.serialport,BytearrayCommands.ReadConfig(parameter))
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -229,12 +230,11 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
         
-    def WriteConfig(self, parameter: list[int])->list|None: #parameter: Block number + 32 bytes
+    def WriteConfig(self, parameter: list[int], tries = 1)->list|None: #parameter: Block number + 32 bytes
         
         """
         Writes a configuration block. 
@@ -249,7 +249,8 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.WriteConfig(parameter))
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -258,12 +259,11 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
         
-    def WriteFullStroke(self, parameter: bool)->list|None: #parameter: on/off
+    def WriteFullStroke(self, parameter: bool, tries = 1)->list|None: #parameter: on/off
         
         """
         Sets the sensor into the check mode where it sends a 100% signal.
@@ -278,7 +278,8 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.WriteFullStroke(parameter))
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -287,12 +288,11 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
         
-    def RestartDevice(self) -> list|None:
+    def RestartDevice(self, tries = 1) -> list|None:
 
         """
         Resets the device. It responses with a 'hello' 
@@ -306,7 +306,8 @@ class Torquimeter:
 
         Methods.SendTelegram(self.serialport,BytearrayCommands.RestartDevice())
         self.isReceiving = True
-        while self.isReceiving: #loop for receiving
+        data = None
+        for attempt in range(tries): #loop for receiving
             try:code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
             if code_received != None:
@@ -315,9 +316,8 @@ class Torquimeter:
                     #Methods.TranslateData(data)
                 except:
                     data = None
-                    self.isReceiving = False
             else: data = None
-            self.isReceiving = False 
+        self.isReceiving = False 
         return data
     
 
@@ -337,7 +337,7 @@ class Methods:
         """
         Read a telegram from the serialport
         """
-        
+        #self.serialport.reset_input_buffer()
         data = SerialPort.readline()
         if data != b'': 
             return data
@@ -497,10 +497,10 @@ class Methods:
             if code_translated[3]==0:
                 parameters_received=[]
             else: 
-                parameters_received=code_translated[4:-2] #here is the important information !!
+                parameters_received=code_translated[4:-2] # here is the important information !!
             return [command,parameters_received]
         else:
-            print('BAD CHECK SUMS')#########################################only_for_debug
+            #print('BAD CHECK SUMS')#########################################only_for_debug
             return None
 
 class BytearrayCommands:
