@@ -133,8 +133,7 @@ Inicializa a comunicação com o torquímetro.
 ### Exemplo de Uso (Básico)
 
 ```python
-import serial
-from LCTSfunctions import Torquimeter, Methods, BytearrayCommands
+from LCTSfunctions import Torquimeter
 
 # Configurações da porta serial e do torquímetro
 PORTA_SERIAL = 'COM3' # Altere para a porta correta do seu sistema
