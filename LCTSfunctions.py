@@ -2,9 +2,10 @@
 =======================================
 Rotary Torque Transducer Communication Library (:mod:`LCTSfunctions`)
 =======================================
-__author  : Isaque Verona
-__date    : 11/07/2025
-__version : v.1
+__author      : Isaque Verona
+__v0_date     : 11/07/2025
+__last_update : 12/04/2026
+__version     : v.2.0
 
 High-Level Flowchart (:mod:`Torquimeter Communication Process`):
 --------------------------------------------------------
