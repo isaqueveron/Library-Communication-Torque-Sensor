@@ -59,7 +59,7 @@ SCMD_GotoSpecialMode =          0x5a
 
 class Torquimeter:
 
-    def __init__(self ,Port:str, Tm_max:100, Rpm_max:30000, 
+    def __init__(self ,Port:str, Tm_max = 100, Rpm_max = 30000, 
                  Baudrate = 230400, Timeout = 0.003, byte_resolution = 25000):
         
         self.serialport = serial.Serial(port=Port,baudrate=Baudrate,timeout=Timeout) #inicializes the serial port
@@ -71,11 +71,11 @@ class Torquimeter:
         self.byte_resolution = byte_resolution # max value in bytes
         #last read values
         self.data = []
-        self.MesurementChannel_0 = None
-        self.MesurementChannel_1 = None
-        self.Torque_calibrated   = None
-        self.RPM_calibrated      = None
-        self.FullstrokeFlag      = None
+        self.MesurementChannel_0 = 0.0
+        self.MesurementChannel_1 = 0.0
+        self.Torque_calibrated   = 0.0
+        self.RPM_calibrated      = 0.0
+        self.FullstrokeFlag      = 0.0
 
     def ReadRaw(self, tries = 1) -> list|None:
 
@@ -99,6 +99,7 @@ class Torquimeter:
             try:
                 code_received=Methods.ReadFrom(self.serialport)
             except: code_received = None
+            #print(code_received)
             if code_received != None:
                 try:
                     Data = Methods.TransformData(Methods.GetRaw(Methods.ReceiveTg(code_received)))
@@ -334,11 +335,6 @@ class Methods:
         SerialPort.write(bytes(tg))
     
     def ReadFrom(SerialPort: object) -> bytearray|None:
-        
-        """
-        Read a telegram from the serialport
-        """
-        #self.serialport.reset_input_buffer()
         data = SerialPort.readline()
         if data != b'': 
             return data
@@ -378,44 +374,25 @@ class Methods:
             i+=1
         return parameters
     
-    def CalcChecksums(tg: list[int]) -> list[int, int]:
-        
-        """
-        Generates checksums for the telegram.
-        
-        Args:
-            tg (list[int]): The telegram data to calculate checksums from.
-        Returns:
-            checksums (list[int, int]): The calculated checksum and weighted checksum.
-        """
-        
-        checksum = 0  # Initialize checksum
-        wchecksum = 0  # Initialize weighted checksum
-        for itm in tg:  # Iterate through telegram items
-            checksum += itm  # Add current item to checksum
-            checksum = checksum & 0xFF  # Ensure checksum fits in one byte
-            
-            wchecksum += checksum  # Add to weighted checksum
-            if wchecksum > 0xFF:  # Handle overflow
+    def CalcChecksums(tg: list[int]) -> list[int]:
+        checksum = 0
+        wchecksum = 0
+        # O manual indica somar todos os bytes APÓS os STXs iniciais 
+        for itm in tg:
+            checksum = (checksum + itm) & 0xFF
+            wchecksum += checksum
+            if wchecksum > 0xFF: # Carry end-around [cite: 116, 120]
                 wchecksum += 1
-            wchecksum = wchecksum & 0xFF  # Ensure wchecksum fits in one byte
-        
-        return [checksum, wchecksum] # Return calculated checksums
+            wchecksum &= 0xFF
+        return [checksum, wchecksum]
 
     def CheckChecksums(tg: bytearray) -> bool:
-
-        """
-        Check the equality of received checksums and calulated checksums.
-        
-        Args:
-            tg (bytearray): The received bytearray.
-        Returns:
-            (bool): Tuple of calculated checksum and wgchecksum.
-        """
-        
-        if Methods.CalcChecksums(list(tg[:-2]))==(list(tg[-2:])):
-            return True
-        else: return False
+        # 1. Deve-se primeiro remover o Byte Stuffing (0x02 0x02 -> 0x02)
+        # 2. O Checksum é validado sobre o telegrama "limpo" (sem STXs de início)
+        # tg aqui já deve estar sem os STX iniciais e sem o stuffing
+        payload = list(tg[:-2])
+        received_cs = list(tg[-2:])
+        return Methods.CalcChecksums(payload) == received_cs
         
     def TransformData(RawData:list) -> list[list,bool]: #func exclusive for the command ReadRaw
             
@@ -482,30 +459,68 @@ class Methods:
             return RawData
         return None
     
-    def ReceiveTg(code_received:bytearray) -> list[int,list[int]]|str:
-        
+    def Unstuff(tg: bytearray) -> list:
         """
-        Func that need to be called to receive the 
-        response telegram after an command was sent and 
-        after you read from the serial port
+        Removes the byte stuffing from the received telegram. 
+        According to the protocol, if 0x02 appears in the data, 
+        it is sent as 0x02 0x02. This function reverts it to a single 0x02.
+        
+        Args:
+            tg (bytearray): The raw bytearray received from the serial port.
+        Returns:
+            unstuffed (list): List of integers with single 0x02 values.
+        """
+        raw = list(tg)
+        unstuffed = []
+        skip = False
+        for i in range(len(raw)):
+            if skip:
+                skip = False
+                continue
+            unstuffed.append(raw[i])
+            # Se encontrar 02 02, pula o próximo
+            if raw[i] == 0x02 and i+1 < len(raw) and raw[i+1] == 0x02:
+                skip = True
+        return unstuffed
+
+    def ReceiveTg(code_received: bytearray) -> list:
+        """
+        Processes the received bytearray, handles byte stuffing, 
+        and validates checksums before extracting the command and parameters.
 
         Args:
-            code_received(bytearray): bytearray read from the serial port
+            code_received (bytearray): Bytearray read from the serial port.
         Returns:
-            (list[int,list[int]] or list[int,0]): command and parameters received
+            (list[int, list[int]]): Command and unstuffed parameters list.
         """
+        if not code_received: return None
+        
+        # 1. Localiza o início real (STX)
+        try:
+            start_idx = code_received.index(0x02)
+            # Pula os STXs iniciais (podem ser um ou dois)
+            while start_idx < len(code_received) and code_received[start_idx] == 0x02:
+                start_idx += 1
+            # O telegrama útil começa após os STXs
+            tg_to_process = code_received[start_idx:]
+        except ValueError:
+            return None
 
-        code_received = Methods.CleanTg(code_received)
-        code_translated = list(code_received)
-        if Methods.CheckChecksums(code_received): # check the integrity of the data
-            command = code_translated[0]
-            if code_translated[3]==0:
-                parameters_received=[]
-            else: 
-                parameters_received=code_translated[4:-2] # here is the important information !!
-            return [command,parameters_received]
+        # 2. Faz o Unstuffing (importante para o Checksum bater!)
+        clean_data = Methods.Unstuff(tg_to_process)
+        
+        # 3. Valida Checksum sobre os dados desdobrados
+        # Os últimos dois bytes são sempre os checksums
+        payload = clean_data[:-2]
+        received_cs = clean_data[-2:]
+        
+        if Methods.CalcChecksums(payload) == received_cs:
+            command = clean_data[0]
+            num_params = clean_data[3]
+            parameters = clean_data[4:4+num_params]
+            return [command, parameters]
         else:
-            #print('BAD CHECK SUMS')#########################################only_for_debug
+            print(f"BAD CHECK SUMS: {clean_data}")
             return None
 
 class BytearrayCommands:
