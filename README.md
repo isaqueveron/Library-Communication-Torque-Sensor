@@ -188,12 +188,6 @@ Contribuições são bem-vindas\! Se você encontrar bugs, tiver sugestões de m
 
 -----
 
-## Licença
-
-Este projeto está licenciado sob a licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.
-
------
-
 ## Contato
 
   * **Isaque Verona** - [GitHub Profile](https://www.google.com/search?q=https://github.com/isaqueveron)
