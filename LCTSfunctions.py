@@ -42,6 +42,7 @@ Telegram format:
 """
 
 import serial
+from math import pi
 
 # BytearrayCommands Bytes
 STX =                           0x02
@@ -75,6 +76,7 @@ class Torquimeter:
         self.MesurementChannel_1 = 0.0
         self.Torque_calibrated   = 0.0
         self.RPM_calibrated      = 0.0
+        self.Potencia_calculated = 0.0
         self.FullstrokeFlag      = 0.0
 
     def ReadRaw(self, tries = 1) -> list|None:
@@ -110,9 +112,10 @@ class Torquimeter:
                     self.data = data
                     self.MesurementChannel_0 = data[0]
                     self.MesurementChannel_1 = data[1]
-                    self.Torque_calibrated   = data[2]*self.Tm_max/self.byte_resolution #TORQUE
+                    self.Torque_calibrated   = -data[2]*self.Tm_max/self.byte_resolution -2.12#TORQUE
                     self.RPM_calibrated      = data[3]*self.Rpm_max/self.byte_resolution #RPM
                     self.FullstrokeFlag      = data[4]
+                    self.Potencia_calculated = self.Torque_calibrated * self.RPM_calibrated * (2 * pi / 60)
                 else: data = None
             else: data = None
         self.isReceiving = False 
@@ -520,7 +523,7 @@ class Methods:
             parameters = clean_data[4:4+num_params]
             return [command, parameters]
         else:
-            print(f"BAD CHECK SUMS: {clean_data}")
+            #print(f"BAD CHECK SUMS: {clean_data}")
             return None
 
 class BytearrayCommands:
